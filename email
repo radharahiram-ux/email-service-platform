@@ -1,0 +1,513 @@
+import React, { useState, useEffect } from 'react';
+import { Mail, Send, Inbox, Star, Trash2, Settings, Search, PenSquare, Paperclip, Users, CheckCircle, AlertCircle, Loader } from 'lucide-react';
+
+export default function EmailServicePlatform() {
+  const [activeTab, setActiveTab] = useState('inbox');
+  const [emails, setEmails] = useState([]);
+  const [selectedEmail, setSelectedEmail] = useState(null);
+  const [composing, setComposing] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [notification, setNotification] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const [composeData, setComposeData] = useState({
+    to: '',
+    subject: '',
+    body: '',
+    cc: '',
+    bcc: ''
+  });
+
+  useEffect(() => {
+    loadEmails();
+    const socket = simulateWebSocket();
+    return () => socket.close();
+  }, []);
+
+  const simulateWebSocket = () => {
+    const interval = setInterval(() => {
+      if (Math.random() > 0.95) {
+        const newEmail = generateRandomEmail();
+        setEmails(prev => [newEmail, ...prev]);
+        showNotification('New email received!', 'success');
+      }
+    }, 5000);
+
+    return { close: () => clearInterval(interval) };
+  };
+
+  const loadEmails = async () => {
+    const mockEmails = [
+      {
+        id: 1,
+        from: 'sarah.johnson@company.com',
+        fromName: 'Sarah Johnson',
+        subject: 'Q4 Marketing Strategy Review',
+        preview: 'Hi team, I wanted to share our quarterly performance metrics...',
+        body: 'Hi team,\n\nI wanted to share our quarterly performance metrics and discuss our strategy for Q4. We\'ve seen a 23% increase in engagement rates and our conversion metrics are looking strong.\n\nLet\'s schedule a meeting to discuss next steps.\n\nBest regards,\nSarah',
+        time: '10:30 AM',
+        starred: true,
+        read: false,
+        avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop'
+      },
+      {
+        id: 2,
+        from: 'mike.chen@tech.io',
+        fromName: 'Mike Chen',
+        subject: 'Server Migration Update',
+        preview: 'The migration to AWS has been completed successfully...',
+        body: 'The migration to AWS has been completed successfully. All services are running smoothly with 99.9% uptime. Performance metrics show 40% improvement in response times.',
+        time: '9:15 AM',
+        starred: false,
+        read: true,
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop'
+      },
+      {
+        id: 3,
+        from: 'emily.rodriguez@design.co',
+        fromName: 'Emily Rodriguez',
+        subject: 'New Design Mockups Ready',
+        preview: 'I\'ve finished the mockups for the mobile app redesign...',
+        body: 'I\'ve finished the mockups for the mobile app redesign. The new interface follows our updated design system and includes the accessibility improvements we discussed.',
+        time: 'Yesterday',
+        starred: false,
+        read: true,
+        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop'
+      },
+      {
+        id: 4,
+        from: 'notifications@analytics.com',
+        fromName: 'Analytics Dashboard',
+        subject: 'Weekly Performance Report',
+        preview: 'Your weekly analytics summary is ready...',
+        body: 'Your weekly analytics summary: 15,234 unique visitors, 45% bounce rate, average session duration 3m 42s. Traffic up 12% from last week.',
+        time: 'Yesterday',
+        starred: false,
+        read: false,
+        avatar: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=150&h=150&fit=crop'
+      }
+    ];
+    setEmails(mockEmails);
+  };
+
+  const generateRandomEmail = () => {
+    const subjects = ['Meeting Reminder', 'Project Update', 'Quick Question', 'Follow-up'];
+    const names = ['Alex Turner', 'Jessica Lee', 'David Park', 'Rachel Kim'];
+    return {
+      id: Date.now(),
+      from: 'new@email.com',
+      fromName: names[Math.floor(Math.random() * names.length)],
+      subject: subjects[Math.floor(Math.random() * subjects.length)],
+      preview: 'You have a new message...',
+      body: 'This is a new incoming message.',
+      time: 'Just now',
+      starred: false,
+      read: false,
+      avatar: `https://images.unsplash.com/photo-${1500000000000 + Math.random() * 100000000000}?w=150&h=150&fit=crop`
+    };
+  };
+
+  const showNotification = (message, type) => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
+
+  const handleSendEmail = async () => {
+    if (!composeData.to || !composeData.subject || !composeData.body) {
+      showNotification('Please fill in all required fields', 'error');
+      return;
+    }
+
+    setSending(true);
+    
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    const sentEmail = {
+      id: Date.now(),
+      from: 'you@email.com',
+      fromName: 'You',
+      to: composeData.to,
+      subject: composeData.subject,
+      body: composeData.body,
+      time: 'Just now',
+      starred: false,
+      read: true,
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop'
+    };
+
+    setEmails(prev => [sentEmail, ...prev]);
+    setSending(false);
+    setComposing(false);
+    setComposeData({ to: '', subject: '', body: '', cc: '', bcc: '' });
+    showNotification('Email sent successfully!', 'success');
+  };
+
+  const filteredEmails = emails.filter(email =>
+    email.fromName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    email.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    email.preview.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const toggleStar = (id) => {
+    setEmails(emails.map(email =>
+      email.id === id ? { ...email, starred: !email.starred } : email
+    ));
+  };
+
+  const markAsRead = (id) => {
+    setEmails(emails.map(email =>
+      email.id === id ? { ...email, read: true } : email
+    ));
+  };
+
+  const deleteEmail = (id) => {
+    setEmails(emails.filter(email => email.id !== id));
+    setSelectedEmail(null);
+    showNotification('Email deleted', 'success');
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 animate-slide-in ${
+          notification.type === 'success' ? 'bg-emerald-500' : 'bg-red-500'
+        } text-white`}>
+          {notification.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+          <span className="font-medium">{notification.message}</span>
+        </div>
+      )}
+
+      <div className="flex h-screen">
+        <div className="w-64 bg-white border-r border-gray-200 flex flex-col shadow-lg">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Mail className="text-white" size={20} />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-800">MailPro</h1>
+                <p className="text-xs text-gray-500">Professional Email</p>
+              </div>
+            </div>
+            
+            <button
+              onClick={() => setComposing(true)}
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-semibold hover:shadow-xl transition-all flex items-center justify-center gap-2 hover:scale-105"
+            >
+              <PenSquare size={18} />
+              Compose
+            </button>
+          </div>
+
+          <nav className="flex-1 p-4">
+            <button
+              onClick={() => setActiveTab('inbox')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg mb-2 transition-all ${
+                activeTab === 'inbox'
+                  ? 'bg-blue-50 text-blue-600 font-semibold'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <Inbox size={20} />
+              <span>Inbox</span>
+              <span className="ml-auto bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                {emails.filter(e => !e.read).length}
+              </span>
+            </button>
+
+            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg mb-2 text-gray-600 hover:bg-gray-50 transition-all">
+              <Star size={20} />
+              <span>Starred</span>
+            </button>
+
+            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg mb-2 text-gray-600 hover:bg-gray-50 transition-all">
+              <Send size={20} />
+              <span>Sent</span>
+            </button>
+
+            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg mb-2 text-gray-600 hover:bg-gray-50 transition-all">
+              <Trash2 size={20} />
+              <span>Trash</span>
+            </button>
+
+            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-all">
+              <Settings size={20} />
+              <span>Settings</span>
+            </button>
+          </nav>
+
+          <div className="p-4 border-t border-gray-200">
+            <div className="flex items-center gap-3 px-3 py-2">
+              <img
+                src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop"
+                alt="User"
+                className="w-10 h-10 rounded-full"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-800 truncate">Kavyansh Krishan</p>
+                <p className="text-xs text-gray-500 truncate">kavyansh.krishan@email.com</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 flex flex-col bg-white">
+          <div className="border-b border-gray-200 p-4 bg-white shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  placeholder="Search emails..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <button className="p-3 hover:bg-gray-50 rounded-xl transition-all">
+                <Users size={20} className="text-gray-600" />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 flex overflow-hidden">
+            <div className="w-96 border-r border-gray-200 overflow-y-auto">
+              {filteredEmails.map((email) => (
+                <div
+                  key={email.id}
+                  onClick={() => {
+                    setSelectedEmail(email);
+                    markAsRead(email.id);
+                  }}
+                  className={`p-4 border-b border-gray-100 cursor-pointer transition-all hover:bg-blue-50 ${
+                    selectedEmail?.id === email.id ? 'bg-blue-50 border-l-4 border-l-blue-600' : ''
+                  } ${!email.read ? 'bg-blue-50/30' : ''}`}
+                >
+                  <div className="flex items-start gap-3">
+                    <img
+                      src={email.avatar}
+                      alt={email.fromName}
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className={`text-sm truncate ${!email.read ? 'font-bold text-gray-900' : 'font-semibold text-gray-700'}`}>
+                          {email.fromName}
+                        </h3>
+                        <span className="text-xs text-gray-500 ml-2">{email.time}</span>
+                      </div>
+                      <p className={`text-sm truncate mb-1 ${!email.read ? 'font-semibold text-gray-800' : 'text-gray-600'}`}>
+                        {email.subject}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate">{email.preview}</p>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleStar(email.id);
+                      }}
+                      className="mt-1"
+                    >
+                      <Star
+                        size={16}
+                        className={email.starred ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
+                      />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex-1 overflow-y-auto bg-gradient-to-br from-white to-slate-50">
+              {composing ? (
+                <div className="max-w-4xl mx-auto p-8">
+                  <div className="bg-white rounded-2xl shadow-xl p-8">
+                    <h2 className="text-2xl font-bold text-gray-800 mb-6">New Message</h2>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">To</label>
+                        <input
+                          type="email"
+                          value={composeData.to}
+                          onChange={(e) => setComposeData({ ...composeData, to: e.target.value })}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="recipient@email.com"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">CC</label>
+                          <input
+                            type="email"
+                            value={composeData.cc}
+                            onChange={(e) => setComposeData({ ...composeData, cc: e.target.value })}
+                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Optional"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">BCC</label>
+                          <input
+                            type="email"
+                            value={composeData.bcc}
+                            onChange={(e) => setComposeData({ ...composeData, bcc: e.target.value })}
+                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Optional"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Subject</label>
+                        <input
+                          type="text"
+                          value={composeData.subject}
+                          onChange={(e) => setComposeData({ ...composeData, subject: e.target.value })}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Email subject"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Message</label>
+                        <textarea
+                          value={composeData.body}
+                          onChange={(e) => setComposeData({ ...composeData, body: e.target.value })}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 h-64 resize-none"
+                          placeholder="Type your message here..."
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between pt-4">
+                        <button className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-xl transition-all">
+                          <Paperclip size={18} />
+                          Attach File
+                        </button>
+
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => setComposing(false)}
+                            className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleSendEmail}
+                            disabled={sending}
+                            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:shadow-xl transition-all flex items-center gap-2 disabled:opacity-50"
+                          >
+                            {sending ? (
+                              <>
+                                <Loader size={18} className="animate-spin" />
+                                Sending...
+                              </>
+                            ) : (
+                              <>
+                                <Send size={18} />
+                                Send Email
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : selectedEmail ? (
+                <div className="max-w-4xl mx-auto p-8">
+                  <div className="bg-white rounded-2xl shadow-xl p-8">
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex items-start gap-4">
+                        <img
+                          src={selectedEmail.avatar}
+                          alt={selectedEmail.fromName}
+                          className="w-16 h-16 rounded-full object-cover"
+                        />
+                        <div>
+                          <h2 className="text-2xl font-bold text-gray-800 mb-1">
+                            {selectedEmail.subject}
+                          </h2>
+                          <p className="text-gray-600">
+                            From: <span className="font-semibold">{selectedEmail.fromName}</span>
+                          </p>
+                          <p className="text-sm text-gray-500">{selectedEmail.from}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => toggleStar(selectedEmail.id)}
+                          className="p-2 hover:bg-gray-100 rounded-lg transition-all"
+                        >
+                          <Star
+                            size={20}
+                            className={selectedEmail.starred ? 'fill-yellow-400 text-yellow-400' : 'text-gray-400'}
+                          />
+                        </button>
+                        <button
+                          onClick={() => deleteEmail(selectedEmail.id)}
+                          className="p-2 hover:bg-red-50 rounded-lg transition-all text-red-500"
+                        >
+                          <Trash2 size={20} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-gray-200 pt-6 mb-6">
+                      <p className="text-sm text-gray-500 mb-4">{selectedEmail.time}</p>
+                      <div className="prose max-w-none">
+                        <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                          {selectedEmail.body}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 pt-4 border-t border-gray-200">
+                      <button className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:shadow-xl transition-all">
+                        Reply
+                      </button>
+                      <button className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all">
+                        Forward
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Mail className="text-blue-600" size={40} />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                      Select an email to read
+                    </h3>
+                    <p className="text-gray-500">
+                      Choose a message from your inbox to view its contents
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <style jsx>{`
+        @keyframes slide-in {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        .animate-slide-in {
+          animation: slide-in 0.3s ease-out;
+        }
+      `}</style>
+    </div>
+  );
+}
