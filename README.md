@@ -15,8 +15,12 @@ A professional, modern email client built with React, TypeScript, and Tailwind C
    cd backend
    npm install
    npm start
-   ```
-   The API will run on `http://localhost:5000`
+# Deploy to Vercel (easiest)
+npm install -g vercel
+vercel login
+vercel
+```
+The API will run on `http://localhost:5000`
 
 2. **Start the Frontend (in a new terminal):**
    ```bash
@@ -106,5 +110,6 @@ This application follows modern React best practices:
 5. Submit a pull request
 
 ## License
+
 
 This project is licensed under the MIT License.
