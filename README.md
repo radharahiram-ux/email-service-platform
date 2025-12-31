@@ -4,11 +4,11 @@ A professional, modern email client built with React, TypeScript, and Tailwind C
 
 ## 🚀 Quick Start
 
-### Prerequisites
+## Prerequisites
 - Node.js (v14 or higher)
 - npm or yarn
 
-### Running the Application
+## Running the Application
 
 1. **Start the Backend API:**
    ```bash
@@ -113,3 +113,4 @@ This application follows modern React best practices:
 
 
 This project is licensed under the MIT License.
+
