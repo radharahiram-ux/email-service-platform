@@ -109,9 +109,10 @@ This application follows modern React best practices:
 4. Add tests if applicable
 5. Submit a pull request
 
-### License
+## License
 
 
 This project is licensed under the MIT License.
+
 
 
